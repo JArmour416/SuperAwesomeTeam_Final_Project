@@ -16,6 +16,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 # Obtain and combine database
 def read_csv():
+
     global data
 
     leads = pd.read_csv('data/leads.csv')
@@ -28,7 +29,7 @@ def read_csv():
 
     student.drop_duplicates(subset=['Id'])
     
-    data = data.iloc[:10000]
+    data = student.iloc[:10000]
     
     return None
 
