@@ -15,12 +15,22 @@ from sklearn.tree import export_graphviz
 from sklearn.ensemble import RandomForestClassifier
 
 # Obtain and combine database
-leads = pd.read_csv('data/leads.csv')
-opps = pd.read_csv('data/opps.csv')
-opps['Opportunity'].fillna(value=1, inplace=True)
-student = pd.concat([opps, leads])
-student.drop_duplicates(subset=['Id'])
-data = data.iloc[:10000]
+def read_csv():
+    global data
+
+    leads = pd.read_csv('data/leads.csv')
+
+    opps = pd.read_csv('data/opps.csv')
+
+    opps['Opportunity'].fillna(value=1, inplace=True)
+
+    student = pd.concat([opps, leads])
+
+    student.drop_duplicates(subset=['Id'])
+    
+    data = data.iloc[:10000]
+    
+    return None
 
 # clean the dataset
 
@@ -109,36 +119,40 @@ def dict(x):
 # Prepare the dataframe for machine learning (we could try different combination, and we will use the following one to cut the calculation waitting time)
 # Data Preprocessing
 
-def xy():
+def traintest_split():
+    global x_train, x_test, y_train, y_test
     df = data[['Media SubGroup', 'Primary Program', 'Unsubscribed', 'Attended Event', 'Opportunity']]
     y = df['Opportunity']
     x = df.drop(axis=1, columns=['Opportunity'])
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
-    return x_train, x_test, y_train, y_test
+    return None
 
 # use knn model
 def knn():
 
-    x_train = xy()[0]
-    x_test = xy()[1]
-    y_train = xy()[2]
-    y_test = xy()[3]
-
     knn = KNeighborsClassifier()
 
     dict = DictVectorizer(sparse=False)
+
     x_train = dict.fit_transform(x_train.to_dict(orient='records'))
+
     x_test = dict.transform(x_test.to_dict(orient='records'))
 
     knn.fit(x_train, y_train)
+
     score = knn.score(x_test, y_test)
 
     # using GridSearchCV 
     param = {'n_neighbors': [5, 10, 50, 100, 500]}
+
     gc = GridSearchCV(knn, param_grid=param, cv=2)
+
     gc.fit(x_train, y_train)
+
     gcscore = gc.score(x_test, y_test)
+
     parameter = gc.best_params_
+
     # y_predict = knn.predict(x_test)
     # y_predict
 
@@ -149,19 +163,17 @@ def knn():
 # Using decision tree
 
 def dec():
-    
-    x_train = xy()[0]
-    x_test = xy()[1]
-    y_train = xy()[2]
-    y_test = xy()[3]
 
     dec = DecisionTreeClassifier()
 
     dict = DictVectorizer(sparse=False)
+
     x_train = dict.fit_transform(x_train.to_dict(orient='records'))
+
     x_test = dict.transform(x_test.to_dict(orient='records'))
 
     dec.fit(x_train, y_train)
+
     score = dec.score(x_test, y_test)
 
     export_graphviz(dec, out_file='tree.dot')
@@ -173,26 +185,26 @@ def dec():
 # Using Random Forest
 
 def rf():
-    
-    x_train = xy()[0]
-    x_test = xy()[1]
-    y_train = xy()[2]
-    y_test = xy()[3]
 
     rf = RandomForestClassifier()
 
     dict = DictVectorizer(sparse=False)
+
     x_train = dict.fit_transform(x_train.to_dict(orient='records'))
+
     x_test = dict.transform(x_test.to_dict(orient='records'))
 
     rf.fit(x_train, y_train)
+
     score = rf.score(x_test, y_test)
 
     # using GridSearchCV to evalue the result
     param = {"n_estimators": [120, 200, 300, 500, 800, 1200], 'max_depth': [5, 8, 15, 25, 30]}
+
     GC = GridSearchCV(rf, param_grid=param, cv=2)
 
     GC.fit(x_train, y_train)
+
     GCscore = GC.score(x_test, y_test)
 
     parameter = GC.best_params_
@@ -203,6 +215,7 @@ def rf():
 
 if __name__ == "__main__":
     cleandata()
-    xy()
+    traintest_split()
     knn()
     dec()
+    rf()
