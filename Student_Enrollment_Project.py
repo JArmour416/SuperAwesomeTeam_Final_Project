@@ -15,8 +15,8 @@ from sklearn.tree import export_graphviz
 from sklearn.ensemble import RandomForestClassifier
 
 # Obtain and combine database
-def read_csv():
-
+def combinedata():
+    
     global data
 
     leads = pd.read_csv('data/leads.csv')
@@ -28,9 +28,9 @@ def read_csv():
     student = pd.concat([opps, leads])
 
     student.drop_duplicates(subset=['Id'])
-    
+
     data = student.iloc[:10000]
-    
+
     return None
 
 # clean the dataset
@@ -89,56 +89,66 @@ def var(x):
     return None
 
 
-def mm(x):
+def mm(x, y):
+
     mm = MinMaxScaler()
 
-    data = mm.fit_transform(x)
+    x_train = mm.fit_transform(x)
 
-    print(data)
+    x_test = mm.transform(y)
 
-    return None
+    return x_train, x_test
 
-def stand(x):
+def stand(x, y):
 
     std = StandardScaler()
 
-    data = std.fit_transform(x)
+    x_train = std.fit_transform(x)
 
-    print(data)
+    x_test = std.transform(y)
 
-    return None
+    return x_train, x_test
 
-def dict(x):
+def dict(x, y):
+
     dict = DictVectorizer(sparse=False) 
 
-    data = dict.fit_transform(x)
+    x_train = dict.fit_transform(x.to_dict(orient='records'))
 
-    print(data)
+    x_test = dict.transform(y.to_dict(orient='records'))
 
-    return None
+    return x_train, x_test
 
-# Prepare the dataframe for machine learning (we could try different combination, and we will use the following one to cut the calculation waitting time)
+# Prepare the dataframe for machine learning 
 # Data Preprocessing
 
 def traintest_split():
-    global x_train, x_test, y_train, y_test
+    # we could try different combination of features, and we will use the following one to save the calculation time
+
     df = data[['Media SubGroup', 'Primary Program', 'Unsubscribed', 'Attended Event', 'Opportunity']]
+
     y = df['Opportunity']
+
     x = df.drop(axis=1, columns=['Opportunity'])
+
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.25)
-    return None
+
+    return x_train, x_test, y_train, y_test
 
 # use knn model
+
+
 def knn():
+
+    x_train, x_test, y_train, y_test = traintest_split()
 
     knn = KNeighborsClassifier()
 
-    dict = DictVectorizer(sparse=False)
+    # x_train, x_test = stand(x_train, x_test)
+    # x_train, x_test = mm(x_train, x_test)
 
-    x_train = dict.fit_transform(x_train.to_dict(orient='records'))
-
-    x_test = dict.transform(x_test.to_dict(orient='records'))
-
+    x_train, x_test = dict(x_train, x_test)
+    
     knn.fit(x_train, y_train)
 
     score = knn.score(x_test, y_test)
@@ -165,6 +175,8 @@ def knn():
 
 def dec():
 
+    x_train, x_test, y_train, y_test = traintest_split()
+
     dec = DecisionTreeClassifier()
 
     dict = DictVectorizer(sparse=False)
@@ -186,6 +198,8 @@ def dec():
 # Using Random Forest
 
 def rf():
+
+    x_train, x_test, y_train, y_test = traintest_split()
 
     rf = RandomForestClassifier()
 
@@ -215,6 +229,7 @@ def rf():
     return None
 
 if __name__ == "__main__":
+    combinedata()
     cleandata()
     traintest_split()
     knn()
